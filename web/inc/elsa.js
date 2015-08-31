@@ -3940,6 +3940,7 @@ YAHOO.ELSA.getVersion = function(){
 				var oTable = document.createElement('table');
 				var oTbody = document.createElement('tbody');
 				oTable.appendChild(oTbody);
+				YAHOO.ELSA.formParams.version['ODE'] = '0.3 (Aug. 28th, 2015 16:00:00 PST)';
 				for (var sName in YAHOO.ELSA.formParams.version){
 					var oTr = document.createElement('tr');
 					oTbody.appendChild(oTr);

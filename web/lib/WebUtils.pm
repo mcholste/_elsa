@@ -47,7 +47,8 @@ body {
 }
 </style>
 <link rel="stylesheet" type="text/css" href=%3$s/inc/custom.css />
-<script type="text/javascript" src="%3$s/inc/swfobject.js"></script>
+<script type="text/javascript" src="%3$s/inc/Chart.min.js" ></script>
+<script type="text/javascript" src="%3$s/inc/Chart.HorizontalBar.js" ></script>
 <script type="text/javascript" src="%3$s/inc/chart.js" ></script>
 <script type="text/javascript" src="%3$s/inc/utilities.js" ></script>
 <script type="text/javascript" src="%3$s/inc/elsa.js" ></script>
@@ -165,6 +166,9 @@ sub get_index_body {
 <script>YAHOO.util.Event.addListener(window, "load", YAHOO.ELSA.main);</script>
 </head>
 <body class=" yui-skin-sam">
+    <div class="header" title="Opallios Distribution of ELSA">
+        <img src="/inc/ode-logo.png" width="66" height="24">
+    </div>
 <div id="menu_bar"></div>
 <div id="panel_root"></div>
 <!--<h1>Enterprise Log Search and Archive</h1>-->
@@ -176,7 +180,15 @@ sub get_index_body {
 	    <div class="yui-content"></div>
     </div>
 </div>
-
+<div class="footer">
+<span class="left-side">
+<a target="_blank" href="http://www.opallios.org">Documentation</a> |
+<a target="_blank" href="https://groups.google.com/forum/#!forum/enterprise-log-search-and-archive">Support</a>
+</span>
+<span class="right-side">
+<a target="_blank" href="http://www.opallios.com/">Opallios Inc.</a> ODE 0.3
+</span>
+</div>
 </body>
 </html>
 EOHTML

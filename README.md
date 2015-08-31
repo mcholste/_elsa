@@ -1,3 +1,69 @@
+ODE
+===================
+This forked branch is for Opallios distribution of ELSA, ODE. [ELSA](https://github.com/mcholste/elsa) is a log management and analytical system. Some of the key changes so far include, running Starman as the default http server, fixes in install script to be more reliable, adding http server watchdog. ODE 0.1 can be installed either as packages or image. Please refer to [opalliosode.org](http://www.opalliosode.org) for more details on ODE.
+
+Getting Started
+-------------
+The latest release of ODE is, **ODE 0.1**. This first ODE release has been tested and verified on four different linux flavors using the standard packaging, deb and rpm.
+
+### <i class="icon-file"></i> ODE Installation
+
+**Note:** You may still use elsa_vars.sh under /etc directory before running the package to make any configuration changes as is the case with the original ELSA installation.
+
+#### Debian - Ubuntu 12.04 and 14.04
+> Download the package,
+```
+> wget https://s3-us-west-1.amazonaws.com/ode0.1/ode_0.1-2_all.deb
+```
+>  Run the package,
+```
+> sudo dpkg -i Downloads/ode_0.1-2_all.deb
+> sudo apt-get install -f
+```
+**Note:** dpkg will complain of missing dependencies, ignore it.
+
+#### RPM - RHEL 6.6 and Centos 6.5
+> Download the package,
+```
+> wget https://s3-us-west-1.amazonaws.com/ode0.1/ode-0.1-2.noarch.rpm
+```
+>  Run the package,
+```
+> sudo yum install Downloads/ode-0.1-2.noarch.rpm
+```
+
+#### Verify Installation
+
+> Check the log,
+```
+  > vi /var/log/ode_install.log
+```
+> Run web UI,
+```
+> http://<ip>
+```
+
+#### Removing Packages
+
+In case you want to remove the installed package. Note, this will delete all the ode related data and configuration on your machine.
+
+> Debian (ubuntu),
+```
+  > apt-get --purge autoremove ode
+```
+> RPM (RHEL/Centos),
+```
+> yum remove ode
+```
+
+### <i class="icon-file"></i> AWS Images
+
+You may also use the pre-built ODE images (medium and large systems) on AWS for quick installation or evaluation. You can search for "opallios" in the Community AMIs for these images.
+
+* Ubuntu 12.04 Med - ODE-ubuntu-1204-med-Opallios
+* Ubuntu 14.04 Large - ODE-ubuntu-1404-large-Opallios
+* RedHat 6.6 Med - ODE-rhel-66-med-Opallios
+
 elsa
 ====
 

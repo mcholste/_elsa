@@ -1,0 +1,116 @@
+#!/bin/bash
+
+# This script runs the starman application
+
+# Source function library.
+if [ -f /lib/lsb/init-functions ]; then
+ #For debian based
+ . /lib/lsb/init-functions 
+else
+ #For rpm
+ . /etc/rc.d/init.d/functions 
+fi
+
+# Look for starman in these paths
+#export PATH=$HOME/.plenv/bin:/sbin:/bin:/usr/bin:/usr/sbin
+
+if [ -f /usr/local/starman ]; then
+  #For Centos
+  export starman="/usr/local/starman"
+elif [ -f /usr/bin/starman ]; then
+  #For RedHat
+  export starman="/usr/bin/starman"
+else
+  #For Ubuntu
+  export starman="/usr/local/bin/starman"
+fi
+
+export myapp_path="/usr/local/elsa/web"
+export PID_FILE="/var/run/starman.pid"
+
+# To find out if this process is running or not
+
+APP_NAME=$(basename $(readlink -f $0))
+
+####################################
+# Start function
+####################################
+start() {
+    echo -n $"Starting $APP_NAME: "
+
+    if [ -f ${PID_FILE} ]; then 
+        pid=`cat ${PID_FILE}`
+        echo "$APP_NAME is already running with process id $pid"        
+        exit 1
+    fi
+    
+    $starman -I${myapp_path}/lib -p 80 --pid ${PID_FILE} --error-log /var/log/starman-error.log ${myapp_path}/lib/Web.psgi -D
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ]; then
+      echo "  Started"
+    else
+      echo "  Failed"
+    fi    
+    return $RETVAL
+}
+
+####################################
+# Stop function
+####################################
+stop() {
+    echo -n $"Stopping $APP_NAME: "
+    killproc -p $PID_FILE $APP_NAME
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ]; then
+      echo "  Stopped"
+    else
+      echo "  Failed"
+    fi 
+    return $RETVAL
+}
+
+
+####################################
+# Status function
+####################################
+status () {
+    if [ -f ${PID_FILE} ]; then 
+       pid=`cat ${PID_FILE}`
+       echo "$APP_NAME is running with process id $pid"
+    else
+       echo "$APP_NAME is not running"      
+    fi
+}
+
+
+####################################
+# Restart function
+####################################
+restart() {
+    stop
+    start
+}
+
+####################################
+# Main function
+####################################
+  
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status
+    ;;  
+  restart)
+    restart
+    ;;  
+  *)
+    echo $"Usage: $prog {start|stop|status|restart}"
+    exit 1
+esac
+
+exit $RETVAL

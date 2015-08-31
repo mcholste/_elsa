@@ -10,7 +10,7 @@ export PATH=$PATH:/usr/local/bin
 
 # CONFIG VARIABLES
 BRANCH_NAME="master"
-ELSA_GIT_REPO="https://github.com/mcholste/elsa.git"
+ELSA_GIT_REPO="https://github.com/opallios/elsa.git"
 BASE_DIR="/usr/local"
 DATA_DIR="/data"
 TMP_DIR="/tmp"
@@ -50,6 +50,8 @@ EVENTLOG_VER="0.2.13"
 SYSLOG_VER="3.4.7"
 GEOIP_DIR="/usr/share/GeoIP/"
 APACHE="apache2"
+HTTP_SERVER="starman"
+HTTP_SERVICE="starman"
 
 if [ -f "/sbin/md5" ]; then
 	MD5SUM="/sbin/md5";
@@ -134,6 +136,13 @@ echo "Assuming distro to be $DISTRO"
 MYSQL_PASS_SWITCH=""
 if [ "$MYSQL_ROOT_PASS" != "" ]; then
     MYSQL_PASS_SWITCH="-p$MYSQL_ROOT_PASS"
+fi
+
+if [ "$HTTP_SERVER" = "apache" ]; then
+    HTTP_SERVICE="$APACHE"
+else
+    HTTP_SERVER="starman"
+    HTTP_SERVICE="starman"
 fi
 
 check_node_installed(){
@@ -396,7 +405,7 @@ build_node_perl(){
 		# This can fail when installing via cpanm, so we'll have ports build it
 		cd /usr/ports/devel/p5-Sys-MemInfo && make install clean
 	else 
-		cpanm Sys::MemInfo
+		cpanm -n Sys::MemInfo
 	fi
 	
 	if [ "$DISTRO" = "centos" ]; then
@@ -408,12 +417,12 @@ build_node_perl(){
 	# Now cpanm is available to install the rest
 	for RETRY in 1 2 3; do
 		# Installing specific version of Test::Simple@0.98 until this is resolved: https://rt.cpan.org/Public/Bug/Display.html?id=89473
-		cpanm Test::Simple@0.98
+		cpanm -n Test::Simple@0.98
 		
 		# Broken test in DBD::mysql
 		cpanm -n DBD::mysql
 		
-		cpanm Time::HiRes CGI Moose JSON::XS Config::JSON String::CRC32 Log::Log4perl DBD::mysql Date::Manip Sys::Info MooseX::Traits DateTime::Format::Strptime Storable JSON Net::OpenSSH Module::Pluggable File::Copy LWP::UserAgent Plack Digest::MD5 Archive::Zip Apache::Admin::Config Digest::SHA MooseX::Log::Log4perl Log::Log4perl::Appender::Socket::UNIX
+		cpanm -n Time::HiRes CGI Moose JSON::XS Config::JSON String::CRC32 Log::Log4perl DBD::mysql Date::Manip Sys::Info MooseX::Traits DateTime::Format::Strptime Storable JSON Net::OpenSSH Module::Pluggable File::Copy LWP::UserAgent Plack Digest::MD5 Archive::Zip Apache::Admin::Config Digest::SHA MooseX::Log::Log4perl Log::Log4perl::Appender::Socket::UNIX
 		RETVAL=$?
 		if [ "$RETVAL" = 0 ]; then
 			break;
@@ -467,7 +476,7 @@ disable_service(){
 build_sphinx(){
 	# Get and build sphinx on nodes
 	cd $TMP_DIR &&
-	curl http://sphinxsearch.com/files/sphinx-$SPHINX_VER.tar.gz > sphinx-$SPHINX_VER.tar.gz &&
+	curl -L http://sphinxsearch.com/files/sphinx-$SPHINX_VER.tar.gz > sphinx-$SPHINX_VER.tar.gz &&
 	tar xzvf sphinx-$SPHINX_VER.tar.gz &&
 	cd sphinx-$SPHINX_VER &&
 	./configure --enable-id64 "--prefix=$BASE_DIR/sphinx" && make && make install &&
@@ -500,7 +509,7 @@ build_syslogng(){
 	fi
 	# Get and build syslog-ng
 	cd $TMP_DIR &&
-	curl "http://www.balabit.com/downloads/files/syslog-ng/open-source-edition/$SYSLOG_VER/source/eventlog_$EVENTLOG_VER.tar.gz" > "eventlog_$EVENTLOG_VER.tar.gz" &&
+	curl -L "http://www.balabit.com/downloads/files/syslog-ng/open-source-edition/$SYSLOG_VER/source/eventlog_$EVENTLOG_VER.tar.gz" > "eventlog_$EVENTLOG_VER.tar.gz" &&
 	tar xzvf "eventlog_$EVENTLOG_VER.tar.gz" &&
 	cd "eventlog-$EVENTLOG_VER" &&
 	./configure && make && make install &&
@@ -513,11 +522,12 @@ build_syslogng(){
 	fi 
 	ldconfig &&
 	cd $TMP_DIR &&
-	curl "http://www.balabit.com/downloads/files/syslog-ng/open-source-edition/$SYSLOG_VER/source/syslog-ng_$SYSLOG_VER.tar.gz" > "syslog-ng_$SYSLOG_VER.tar.gz" &&
+	curl -L "http://www.balabit.com/downloads/files/syslog-ng/open-source-edition/$SYSLOG_VER/source/syslog-ng_$SYSLOG_VER.tar.gz" > "syslog-ng_$SYSLOG_VER.tar.gz" &&
 	tar xzvf "syslog-ng_$SYSLOG_VER.tar.gz" &&
 	cd "syslog-ng-$SYSLOG_VER" &&
 	./configure "--prefix=$BASE_DIR/syslog-ng-$SYSLOG_VER" --enable-ipv6 && 
-	make && make install && 
+	make && make install &&
+	rm -rf "$BASE_DIR/syslog-ng" &&
 	ln -fs "$BASE_DIR/syslog-ng-$SYSLOG_VER" "$BASE_DIR/syslog-ng" &&
 	# Copy the syslog-ng.conf
 	#cat "$BASE_DIR/elsa/node/conf/syslog-ng.conf" | sed -e "s|\/usr\/local|$BASE_DIR|g" | sed -e "s|\/data|$DATA_DIR|g" > "$BASE_DIR/syslog-ng/etc/syslog-ng.conf" &&
@@ -1001,12 +1011,12 @@ build_web_perl(){
 		cpanm -n DBD::mysql
 		
 		# Need a specific version of Ouch to not require Perl 5.12
-		cpanm Ouch@0.0403
+		cpanm -n Ouch@0.0403
 		
 		# Installing specific version of Test::Simple@0.98 until this is resolved: https://rt.cpan.org/Public/Bug/Display.html?id=89473
-		cpanm Test::Simple@0.98
+		cpanm -n Test::Simple@0.98
 		
-		cpanm Time::Local Time::HiRes Moose JSON::XS Config::JSON Plack::Builder Plack::Util Plack::App::File Date::Manip Digest::SHA1 MIME::Base64 URI::Escape Socket Net::DNS Sys::Hostname::FQDN String::CRC32 CHI CHI::Driver::RawMemory Search::QueryParser AnyEvent::DBI DBD::mysql EV Sys::Info Sys::MemInfo MooseX::Traits Authen::Simple Authen::Simple::DBI Authen::Simple::LDAP Net::LDAP::Express Net::LDAP::FilterBuilder Plack::Middleware::CrossOrigin URI::Escape Module::Pluggable Module::Install PDF::API2::Simple XML::Writer Parse::Snort Spreadsheet::WriteExcel IO::String Mail::Internet Plack::Middleware::Static Log::Log4perl Email::LocalDelivery Plack::Session Sys::Info CHI::Driver::DBI Plack::Builder::Conditionals AnyEvent::HTTP URL::Encode MooseX::ClassAttribute MooseX::Log::Log4perl Authen::Simple::DBI Plack::Middleware::NoMultipleSlashes MooseX::Storage MooseX::Clone Data::Google::Visualization::DataSource Data::Google::Visualization::DataTable DateTime File::Slurp URI::Encode Search::QueryParser::SQL Module::Load::Conditional Authen::Simple::Kerberos Digest::MD5 Hash::Merge::Simple Digest::SHA Archive::Extract Apache::Admin::Config Text::CSV Log::Log4perl::Appender::Socket::UNIX Plack::Middleware::XForwardedFor Try::Tiny Data::Serializable
+		cpanm -n Time::Local Time::HiRes Moose JSON::XS Config::JSON Plack::Builder Plack::Util Plack::App::File Date::Manip Digest::SHA1 MIME::Base64 URI::Escape Socket Net::DNS Sys::Hostname::FQDN String::CRC32 CHI CHI::Driver::RawMemory Search::QueryParser AnyEvent::DBI DBD::mysql EV Sys::Info Sys::MemInfo MooseX::Traits Authen::Simple Authen::Simple::DBI Authen::Simple::LDAP Net::LDAP::Express Net::LDAP::FilterBuilder Plack::Middleware::CrossOrigin URI::Escape Module::Pluggable Module::Install PDF::API2::Simple XML::Writer Parse::Snort Spreadsheet::WriteExcel IO::String Mail::Internet Plack::Middleware::Static Log::Log4perl Email::LocalDelivery Plack::Session Sys::Info CHI::Driver::DBI Plack::Builder::Conditionals AnyEvent::HTTP URL::Encode MooseX::ClassAttribute MooseX::Log::Log4perl Authen::Simple::DBI Plack::Middleware::NoMultipleSlashes MooseX::Storage MooseX::Clone Data::Google::Visualization::DataSource Data::Google::Visualization::DataTable DateTime File::Slurp URI::Encode Search::QueryParser::SQL Module::Load::Conditional Authen::Simple::Kerberos Digest::MD5 Hash::Merge::Simple Digest::SHA Archive::Extract Apache::Admin::Config Text::CSV Log::Log4perl::Appender::Socket::UNIX Plack::Middleware::XForwardedFor Try::Tiny Data::Serializable
 		
 		RETVAL=$?
 		if [ "$RETVAL" = 0 ]; then
@@ -1182,7 +1192,7 @@ set_version(){
 
 suse_set_apache(){
 	# For Apache, locations vary, but this is the gist:
-	cpanm Plack::Handler::Apache2
+	cpanm -n Plack::Handler::Apache2
 	if [ "$USE_LOCAL_APACHE_CONF" = "1" ]; then
 		echo "Not changing apache.conf, using local version"
 	else
@@ -1222,7 +1232,7 @@ ubuntu_set_apache(){
 			echo "PerlPostConfigRequire /etc/apache2/elsa_startup.pl" >> /etc/apache2/mods-available/perl.conf;
 		fi
 	fi
-	cpanm Plack::Handler::Apache2
+	cpanm -n Plack::Handler::Apache2
 	if [ "$USE_LOCAL_APACHE_CONF" = "1" ]; then
 		echo "Not changing apache.conf, using local version"
 	else
@@ -1240,19 +1250,31 @@ ubuntu_set_apache(){
 	
 	chown -R $WEB_USER "$DATA_DIR/elsa/log"
 	
-	# Ensure that Apache has the right prefork settings
-	APACHE_CONF="/etc/apache2/apache2.conf"
+	#Apache 2.4 has different conf file compared to Apache 2.2
+    APACHE_CONF="/etc/apache2/apache2.conf"
+	APACHE_PARAM="MaxRequestsPerChild"
+	if [ -f /etc/apache2/mods-available/mpm_prefork.conf ]; then
+	  APACHE_CONF="/etc/apache2/mods-available/mpm_prefork.conf"
+	  APACHE_PARAM="MaxConnectionsPerChild"
+	fi	
+	
 	cp $APACHE_CONF "$APACHE_CONF.elsabak"
-	set_apache_tuning $APACHE_CONF "mpm_prefork_module";
-	service apache2 restart
-	enable_service "apache2"
+	set_apache_tuning $APACHE_CONF "mpm_prefork_module" $APACHE_PARAM;
+	
+	# Ensure that Apache has the right prefork settings
+	if [ "$HTTP_SERVER" = "apache" ]; then
+       service apache2 restart
+	   enable_service "apache2"
+    fi
+    
 	return $?
 }
 
 set_apache_tuning(){
 	FILE=$1
 	MODULE=$2
-	perl -le 'use Apache::Admin::Config; my $ap = new Apache::Admin::Config("$ARGV[0]"); my @ar = $ap->select(-name => "IfModule", -value => "$MODULE"); use Data::Dumper; $ar[0]->directive("MaxRequestsPerChild")->set_value(2); $ap->save();' $FILE
+	PARAMETER=$3
+	perl -le 'use Apache::Admin::Config; my $ap = new Apache::Admin::Config("$ARGV[0]"); my @ar = $ap->select(-name => "IfModule", -value => "$MODULE"); use Data::Dumper; $ar[0]->directive("$PARAMETER")->set_value(2); $ap->save();' $FILE
 }
 
 centos_set_apache(){
@@ -1262,7 +1284,7 @@ centos_set_apache(){
 	if [ $? -ne 0 ]; then
 		echo "PerlPostConfigRequire /etc/httpd/conf/elsa_startup.pl" >> /etc/httpd/conf.d/perl.conf;
 	fi
-	cpanm Plack::Handler::Apache2
+	cpanm -n Plack::Handler::Apache2
 	if [ "$USE_LOCAL_APACHE_CONF" = "1" ]; then
 		echo "Not changing apache.conf, using local version"
 	else
@@ -1287,10 +1309,13 @@ centos_set_apache(){
 	# Ensure that Apache has the right prefork settings
 	APACHE_CONF="/etc/httpd/conf/httpd.conf"
 	cp $APACHE_CONF "$APACHE_CONF.elsabak"
-	set_apache_tuning $APACHE_CONF "prefork.c";
+	set_apache_tuning $APACHE_CONF "mpm_prefork_module" "MaxRequestsPerChild";
 	
-	service httpd restart
-	enable_service "httpd"
+	if [ "$HTTP_SERVER" = "apache" ]; then
+	   service httpd restart
+	   enable_service "httpd"
+	fi
+
 	# Set firewall
 	#echo "opening firewall port 80" &&
 	#cp /etc/sysconfig/iptables /etc/sysconfig/iptables.bak.elsa &&
@@ -1315,7 +1340,7 @@ freebsd_set_apache(){
 		echo "Enabling mod_perl"
 		echo "LoadModule perl_module libexec/$APACHE/mod_perl.so" >> /usr/local/etc/$APACHE/httpd.conf
 	fi
-	cpanm Plack::Handler::Apache2
+	cpanm -n Plack::Handler::Apache2
 	if [ "$USE_LOCAL_APACHE_CONF" = "1" ]; then
 		echo "Not changing apache.conf, using local version"
 	else
@@ -1333,6 +1358,25 @@ freebsd_set_apache(){
 	return $?
 }
 
+############
+# Install Starman
+############
+set_starman(){
+  if [ "$HTTP_SERVER" = "starman" ]; then
+    echo "Installing starman.."
+    cpanm -n Starman
+  
+    echo "Copy starman to init.d directory.."
+    cp $BASE_DIR/elsa/contrib/starman $INIT_DIR
+  
+    service $APACHE stop
+    enable_service "starman"
+    service starman restart
+  fi
+  
+  return $?
+}
+
 set_cron(){
 	# Setup alerts (optional)
 	echo "Adding cron entry for alerts..."
@@ -1343,7 +1387,11 @@ set_cron(){
 		return 0;
 	fi
 	
+	#change the http service name
+	sed -i -e "s/xxx/${HTTP_SERVICE}/g" $BASE_DIR/elsa/contrib/http_monitor.sh
+	
 	echo "* * * * * perl $BASE_DIR/elsa/web/cron.pl -c /etc/elsa_web.conf > /dev/null 2>&1" >> $CRONTAB_DIR/root &&
+	echo "*/5 * * * * $BASE_DIR/elsa/contrib/http_monitor.sh  > /dev/null 2>&1" >> $CRONTAB_DIR/root &&
 	chmod 600 $CRONTAB_DIR/root &&
 	service $CRON_SERVICE restart
 	return $?
@@ -1396,7 +1444,7 @@ validate_config(){
 
 if [ "$INSTALL" = "node" ]; then
 	if [ "$OP" = "ALL" ]; then
-		for FUNCTION in "check_node_installed" $DISTRO"_get_node_packages" "set_date" "check_svn_proxy" "get_elsa_from_github" "get_cpanm" "build_node_perl" "mk_node_dirs" "build_sphinx" "build_syslogng" "set_syslogng_conf" "set_node_mysql" "init_elsa" "test_elsa" "set_logrotate" "validate_config" ; do
+		for FUNCTION in "check_node_installed" $DISTRO"_get_node_packages" "set_date" "check_svn_proxy" "get_elsa_from_github" "get_cpanm" "build_node_perl" "mk_node_dirs" "build_sphinx" "build_syslogng" "set_node_mysql" "init_elsa" "test_elsa" "set_logrotate" "validate_config" ; do
 			exec_func $FUNCTION
 		done
 	elif [ "$OP" = "update" ]; then
@@ -1408,11 +1456,11 @@ if [ "$INSTALL" = "node" ]; then
 	fi
 elif [ "$INSTALL" = "web" ]; then
 	if [ "$OP" = "ALL" ]; then
-		for FUNCTION in "check_web_installed" $DISTRO"_get_web_packages" "set_date" "check_svn_proxy" "get_elsa_from_github" "get_cpanm" "build_web_perl" "set_web_mysql" "mk_web_dirs" $DISTRO"_set_apache" "set_cron" "set_logrotate" "set_version" "validate_config" ; do
+		for FUNCTION in "check_web_installed" $DISTRO"_get_web_packages" "set_date" "check_svn_proxy" "get_elsa_from_github" "get_cpanm" "build_web_perl" "set_web_mysql" "mk_web_dirs" $DISTRO"_set_apache" "set_starman" "set_cron" "set_logrotate" "set_version" "validate_config" ; do
 			exec_func $FUNCTION
 		done
 	elif [ "$OP" = "update" ]; then
-		for FUNCTION in $DISTRO"_get_web_packages" "set_date" "check_svn_proxy" "get_elsa_from_github" "build_web_perl" "update_web_mysql" "set_version" "validate_config" $DISTRO"_set_apache"; do
+		for FUNCTION in $DISTRO"_get_web_packages" "set_date" "check_svn_proxy" "get_elsa_from_github" "build_web_perl" "update_web_mysql" "set_version" "validate_config" $DISTRO"_set_apache" "set_starman"; do
 			exec_func $FUNCTION
 		done
 	else
@@ -1423,4 +1471,3 @@ fi
 echo "!!!!!! IMPORTANT !!!!!!!!!"
 echo "Do not edit this file, edit /etc/elsa_vars.sh if you need to make any changes."
 echo "If you have a host-based firewall like IPTables running, remember to allow ports 80 (and/or 443) for the web server and ports 514 (syslog), 3306 (MySQL), and 9306 (Sphinx) for log nodes"
-

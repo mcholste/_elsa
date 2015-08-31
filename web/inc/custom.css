@@ -368,3 +368,86 @@ inputWrapperMiddle{
 .dashboard.cell {
 	vertical-align: text-top;
 }
+div.dbchart canvas {
+	margin: 15px 15px 0 15px;
+}
+div.dbchart > * {
+	display: inline-block;
+	vertical-align: top;
+}
+ul.line-legend li,
+ul.bar-legend li,
+ul.doughnut-legend li,
+ul.pie-legend li {
+	list-style: none;
+}
+ul.line-legend li span,
+ul.bar-legend li span,
+ul.doughnut-legend li span,
+ul.pie-legend li span {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	margin-right: 0.5em;
+}
+div.chart-div>div {
+	margin-left: 40px;
+}
+div.chart-div>div,
+div.chart-div>canvas {
+	display: inline-block;
+}
+div.chart-div>canvas {
+	margin: auto 50px;
+}
+div.outer-chart-div {
+	background: #fff;
+}
+div.outer-chart-div>div>h3 {
+	float: right;
+	width: 65%;
+}
+#google_charts_tbody > tr:first-child > td {
+	border-top: 0 solid #bbc;
+}
+#google_charts_tbody > tr > td {
+	padding: 5px 0;
+}
+#tabView .yui-content {
+	background: #fff;
+	border-bottom-color: #ddd;
+}
+.google-visualization-table-table th {
+	z-index: 0 !important;
+}
+div.header {
+	background-color: rgb(168,168,168);
+	position: fixed;
+	top: 0;
+	width: 100%;
+	height: 26px;
+	z-index: 250;
+}
+div.header img {
+	padding: 2px 5px;
+	margin: 0 auto;
+}
+#menu_bar {
+	margin-top: 26px;
+}
+#logs {
+	min-height: 500px;
+}
+div.footer {
+	width: 99%;
+	padding: 5px;
+}
+div.footer span {
+	font-size: 90%;
+}
+div.footer span.left-side {
+}
+div.footer span.right-side {
+	float: right;
+	text-align: right;
+}
