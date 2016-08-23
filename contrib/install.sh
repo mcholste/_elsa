@@ -339,38 +339,6 @@ get_elsa_from_github(){
 	fi
 }
 
-get_elsa(){
-	# Find our current md5
-	BEFORE_MD5=$($MD5SUM $SELF | cut -f1 -d\ )
-	echo "Current MD5: $BEFORE_MD5"
-	# Get the latest code from Google Code
-	cd $BASE_DIR
-	# Check to see if svn accepts --trust-server-cert
-	SVN_TRUST_SERVER_CERT=" --trust-server-cert"
-	svn help export | grep trust
-	if [ $? -ne 0 ]; then 
-		SVN_TRUST_SERVER_CERT=""
-	fi
-	svn -r $VERSION --non-interactive $SVN_TRUST_SERVER_CERT --force export "https://enterprise-log-search-and-archive.googlecode.com/svn/branches/elsa/1.5" elsa &&
-	mkdir -p "$BASE_DIR/elsa/node/tmp/locks" && 
-	touch "$BASE_DIR/elsa/node/tmp/locks/directory"
-	touch "$BASE_DIR/elsa/node/tmp/locks/query"
-	UPDATE_OK=$?
-			
-	DOWNLOADED="$BASE_DIR/elsa/contrib/$THIS_FILE"
-	AFTER_MD5=$($MD5SUM $DOWNLOADED | cut -f1 -d\ )
-	echo "Latest MD5: $AFTER_MD5"
-	
-	if [ "$BEFORE_MD5" != "$AFTER_MD5" ] && [ "$USE_LOCAL_INSTALL" != "1" ]; then
-		echo "Restarting with updated install.sh..."
-		echo "$SHELL $DOWNLOADED $INSTALL $OP"
-		$SHELL $DOWNLOADED $INSTALL $OP;
-		exit;
-	else
-		return $UPDATE_OK
-	fi
-}
-
 get_cpanm(){
 	if [ \! -f /usr/local/bin/cpanm ]; then
 		cd $TMP_DIR && curl --insecure -L http://cpanmin.us | perl - App::cpanminus
